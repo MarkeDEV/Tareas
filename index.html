@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tareas del Grupo "C"</title>
+  <title>Tareas del Grupo</title>
   <style>
     @font-face {
       font-family: 'CascadiaCode';
@@ -147,7 +147,7 @@ const firebaseConfig = {
   appId: "1:352867129861:web:36ec1052ff04ff4ff25a6c"
 };
 
-const ADMIN_PIN = "marlon@";
+const ADMIN_PIN = "1234";
 const CARD_COLORS = [
   { value: "#d8cff0", label: "Morado" },
   { value: "#c8e6c9", label: "Verde" },
@@ -511,18 +511,16 @@ window.doSendAi = async function() {
   const todayStr = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,"0") + "-" + String(now.getDate()).padStart(2,"0");
   const dayName = now.toLocaleDateString("es-SV", { weekday:"long" });
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
+    const prompt = "Eres un asistente que extrae datos de tareas escolares. Hoy es " + dayName + " " + todayStr + ". El usuario describe una tarea en lenguaje natural. Extrae: title (nombre corto max 60 chars), desc (descripcion breve), assigned (hoy en YYYY-MM-DD), due (fecha entrega en YYYY-MM-DD, infiere el dia mas proximo si dice viernes, domingo, etc). Responde SOLO con JSON valido sin markdown. Ejemplo: {\"title\":\"Expo lenguaje\",\"desc\":\"Noticiero dramatizando un poema\",\"assigned\":\"2026-04-25\",\"due\":\"2026-05-02\"}. Tarea: " + input;
+    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyAACulaDjPsvDe6KDF5Tiu6flaTwUeovhw", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 500,
-        system: "Eres un asistente que extrae datos de tareas escolares. Hoy es " + dayName + " " + todayStr + ". El usuario describe una tarea en lenguaje natural. Extrae: title (nombre corto max 60 chars), desc (descripcion breve), assigned (hoy en YYYY-MM-DD), due (fecha entrega en YYYY-MM-DD, infiere el dia mas proximo si dice viernes, domingo, etc). Responde SOLO con JSON valido sin markdown. Ejemplo: {\"title\":\"Expo lenguaje\",\"desc\":\"Noticiero dramatizando un poema\",\"assigned\":\"2026-04-25\",\"due\":\"2026-05-02\"}",
-        messages: [{ role: "user", content: input }]
+        contents: [{ parts: [{ text: prompt }] }]
       })
     });
     const data = await res.json();
-    const text = (data.content && data.content[0] && data.content[0].text) || "";
+    const text = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text) || "";
     aiTaskData = JSON.parse(text.replace(/```json|```/g, "").trim());
     const preview = document.getElementById("aiPreview");
     if (preview) {
