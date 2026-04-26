@@ -512,7 +512,7 @@ window.doSendAi = async function() {
   const dayName = now.toLocaleDateString("es-SV", { weekday:"long" });
   try {
     const prompt = "Eres un asistente que extrae datos de tareas escolares. Hoy es " + dayName + " " + todayStr + ". El usuario describe una tarea en lenguaje natural. Extrae: title (nombre corto max 60 chars), desc (descripcion breve), assigned (hoy en YYYY-MM-DD), due (fecha entrega en YYYY-MM-DD, infiere el dia mas proximo si dice viernes, domingo, etc). Responde SOLO con JSON valido sin markdown. Ejemplo: {\"title\":\"Expo lenguaje\",\"desc\":\"Noticiero dramatizando un poema\",\"assigned\":\"2026-04-25\",\"due\":\"2026-05-02\"}. Tarea: " + input;
-    const res = await fetch("https://generativelenguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=AIzaSyA-fm2yH0jwfDVhDU8UIuLMbmcHdlCwLH0", {
+    const res = await fetch("https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=AIzaSyA-fm2yH0jwfDVhDU8UIuLMbmcHdlCwLH0", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
