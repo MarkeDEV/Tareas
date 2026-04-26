@@ -512,16 +512,25 @@ window.doSendAi = async function() {
   const dayName = now.toLocaleDateString("es-SV", { weekday:"long" });
   try {
     const prompt = "Eres un asistente que extrae datos de tareas escolares. Hoy es " + dayName + " " + todayStr + ". El usuario describe una tarea en lenguaje natural. Extrae: title (nombre corto max 60 chars), desc (descripcion breve), assigned (hoy en YYYY-MM-DD), due (fecha entrega en YYYY-MM-DD, infiere el dia mas proximo si dice viernes, domingo, etc). Responde SOLO con JSON valido sin markdown. Ejemplo: {\"title\":\"Expo lenguaje\",\"desc\":\"Noticiero dramatizando un poema\",\"assigned\":\"2026-04-25\",\"due\":\"2026-05-02\"}. Tarea: " + input;
-    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyAACulaDjPsvDe6KDF5Tiu6flaTwUeovhw", {
+    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyAACulaDjPsvDe6KDF5Tiu6flaTwUeovhw", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.1, maxOutputTokens: 300 }
       })
     });
+    if (!res.ok) {
+      const errData = await res.json().catch(function(){ return {}; });
+      throw new Error("HTTP " + res.status + " - " + (errData.error && errData.error.message ? errData.error.message : "Error desconocido"));
+    }
     const data = await res.json();
     const text = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text) || "";
-    aiTaskData = JSON.parse(text.replace(/```json|```/g, "").trim());
+    if (!text) throw new Error("Respuesta vacia");
+    const cleanText = text.replace(/```json|```/g, "").trim();
+    const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error("Sin JSON: " + cleanText.substring(0, 80));
+    aiTaskData = JSON.parse(jsonMatch[0]);
     const preview = document.getElementById("aiPreview");
     if (preview) {
       preview.innerHTML = "<b>" + esc(aiTaskData.title) + "</b><br>" +
@@ -533,7 +542,7 @@ window.doSendAi = async function() {
   } catch(e) {
     if (loadBox) loadBox.style.display = "none";
     if (submitRow) submitRow.style.display = "flex";
-    if (errBox) { errBox.style.display = "block"; errBox.textContent = "No se pudo interpretar. Intenta de nuevo."; }
+    if (errBox) { errBox.style.display = "block"; errBox.textContent = "Error: " + (e && e.message ? e.message : "Intenta de nuevo"); }
   }
 };
 
