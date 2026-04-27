@@ -130,7 +130,9 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     .btn-full { width: 100%; }
-    @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
+    @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; }
+    .card-actions { top: -32px;}
+  }
   </style>
 </head>
 <body>
@@ -176,7 +178,7 @@ const fireApp = initializeApp(firebaseConfig);
 const db = getFirestore(fireApp);
 
 let tasks = [];
-let adminUnlocked = true;
+let adminUnlocked = false;
 let editingId = null;
 let addOpen = false;
 let loginOpen = false;
