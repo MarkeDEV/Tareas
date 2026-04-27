@@ -185,7 +185,7 @@ let selectedColor = CARD_COLORS[0].value;
 let editSelectedColor = CARD_COLORS[0].value;
 let currentUser = localStorage.getItem("userName") || "";
 if (!currentUser) {
-  const modal = document.getElementById("logingModal");
+  const modal = document.getElementById("loginModal");
   if (modal) modal.style.display = "flex";
 }
 
@@ -532,25 +532,13 @@ window.doLogout = function() {
   dotsOpen = false;
   location.reload();
 }
-window.doLoginName = function () {
+window.doLoginName = function() {
   const input = document.getElementById("loginInput");
-  const nobre = input ? input.value.trim() : "";
+  const nombre = input ? input.value.trim() : "";
   if (!nombre) {
     if (input) input.style.border = "2px solid red";
     return;
   }
-  currentUser = nombre;
-  localStorage.setItem("userName", currentUser)
-  const modal = document.getElementById("loginModal");
-  if (modal) modal.style.display = "none";
-  render();
-};
-
-
-window.doLoginName = function() {
-  const input = document.getElementById("logingInput");
-  const nombre = input && input.value.trim();
-  if (!nombre) { input.style.border = "2px solid red"; return; }
   currentUser = nombre;
   localStorage.setItem("userName", currentUser);
   const modal = document.getElementById("loginModal");
