@@ -554,6 +554,7 @@ window.doCloseRanking = function() {
 };
 
 window.doConfirmDone = async function(taskId, name) {
+  if (!adminUnlocked) return;
   const task = tasks.find(function(t){ return t.id === taskId; });
   if (!task) return;
   const confirmedBy = task.confirmedBy || [];
@@ -563,6 +564,7 @@ window.doConfirmDone = async function(taskId, name) {
 };
 
 window.doRejectDone = async function(taskId, name) {
+  if (!adminUnlocked) return;
   const task = tasks.find(function(t){ return t.id === taskId; });
   if (!task) return;
   const doneBy = (task.doneBy || []).filter(function(n){ return n !== name; });
@@ -658,14 +660,19 @@ window.doShowDoneBy = function(id) {
     doneBy.forEach(function(name) {
       const isConfirmed = confirmedBy.includes(name);
       const dateStr = meta[name] ? new Date(meta[name]).toLocaleDateString("es-SV") : "";
+      const actionHtml = adminUnlocked
+        ? (isConfirmed
+            ? '<span style="color:#2e7d32;font-size:12px;font-weight:700;">✔ Verificado</span><button onclick="window.doRejectDone(\'' + id + '\',\'' + name + '\')" style="background:none;border:1px solid #d93025;border-radius:6px;color:#d93025;font-size:11px;padding:3px 8px;cursor:pointer;font-family:\'CascadiaCode\',monospace;">Rechazar</button>'
+            : '<button onclick="window.doConfirmDone(\'' + id + '\',\'' + name + '\')" style="background:#7c4dcc;border:none;border-radius:6px;color:white;font-size:11px;padding:4px 10px;cursor:pointer;font-family:\'CascadiaCode\',monospace;">✔ Verificar</button><button onclick="window.doRejectDone(\'' + id + '\',\'' + name + '\')" style="background:none;border:1px solid #d93025;border-radius:6px;color:#d93025;font-size:11px;padding:3px 8px;cursor:pointer;font-family:\'CascadiaCode\',monospace;">✕</button>')
+        : (isConfirmed
+            ? '<span style="color:#2e7d32;font-size:12px;font-weight:700;">✔ Verificado</span>'
+            : '<span style="color:#7a6a99;font-size:12px;font-weight:700;">Pendiente</span>');
       html += '<div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #ede8f5;">' +
         '<div style="flex:1;">' +
           '<div style="font-size:14px;color:#2a1f3d;">' + esc(name) + '</div>' +
           (dateStr ? '<div style="font-size:10px;color:#7a6a99;">' + dateStr + '</div>' : '') +
         '</div>' +
-        (isConfirmed
-          ? '<span style="color:#2e7d32;font-size:12px;font-weight:700;">✔ Verificado</span><button onclick="window.doRejectDone(\'' + id + '\',\'' + name + '\')" style="background:none;border:1px solid #d93025;border-radius:6px;color:#d93025;font-size:11px;padding:3px 8px;cursor:pointer;font-family:\'CascadiaCode\',monospace;">Rechazar</button>'
-          : '<button onclick="window.doConfirmDone(\'' + id + '\',\'' + name + '\')" style="background:#7c4dcc;border:none;border-radius:6px;color:white;font-size:11px;padding:4px 10px;cursor:pointer;font-family:\'CascadiaCode\',monospace;">✔ Verificar</button><button onclick="window.doRejectDone(\'' + id + '\',\'' + name + '\')" style="background:none;border:1px solid #d93025;border-radius:6px;color:#d93025;font-size:11px;padding:3px 8px;cursor:pointer;font-family:\'CascadiaCode\',monospace;">✕</button>') +
+        actionHtml +
         '</div>';
     });
   }
