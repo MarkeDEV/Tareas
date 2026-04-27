@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tareas del Grupo</title>
   <style>
+    html { overflow-x: hidden; max-width: 100%; }
     @font-face {
       font-family: 'CascadiaCode';
       src: url('https://cdn.jsdelivr.net/gh/microsoft/cascadia-code@v2111.01/ttf/CascadiaCode.ttf') format('truetype');
@@ -22,7 +23,7 @@
       --card: #ffffff;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: var(--bg); color: var(--text); font-family: 'CascadiaCode', monospace; min-height: 100vh; }
+    body { background: var(--bg); color: var(--text); font-family: 'CascadiaCode', monospace; min-height: 100vh; overflow-x: hidden; max-width: 100vw; }
     body::before {
       content: ''; position: fixed; inset: 0;
       background: radial-gradient(circle at 20% 20%, rgba(124,77,204,0.08) 0%, transparent 50%),
@@ -332,9 +333,9 @@ function render() {
     taskHTML += '<div class="task-card" style="background:' + borderColor + ';border-color:' + borderColor + '">' +
       (adminUnlocked ? '<div class="card-actions"><button class="icon-btn edit" onclick="doStartEdit(\'' + t.id + '\')">✏</button><button class="icon-btn del" onclick="doDelete(\'' + t.id + '\')">✕</button></div>' : '') +
       '<div class="card-num">TAREA #' + String(i+1).padStart(2,"0")  +
-      '<div style="display:flex;align-items:center;justify-content:space-between;width:14%">' +
-        '<span class="badge" style="background:' + u.bg + ';color:' + u.color + 'margin-left:8px;">' + u.label + '</span>'  +
-        '<span onclick="doToggleDone(\'' + t.id + '\',\'' + t.done + '\')" style="cursor:poiner;font-size: 18px;margin-top:-10px;">' + (t.done ? '✅' : '⬜') + '</span>' + '</div></div>' +
+      '<div style="display:flex;align-items:center;gap:6px;">' +
+        '<span class="badge" style="background:' + u.bg + ';color:' + u.color + ';">' + u.label + '</span>'  +
+        '<span onclick="doToggleDone(\'' + t.id + '\',\'' + t.done + '\')" style="cursor:pointer;font-size:18px;">' + (t.done ? '✅' : '⬜') + '</span>' + '</div></div>' +
       '<div class="card-title" style="' + (t.done ? 'text-decoration:line-through;opacity:0.5' : '') + '">' + esc(t.title) + '</div>' +
       (t.desc ? '<div class="card-desc">' + t.desc + '</div>' : '') +
       '<div class="card-meta">' +
