@@ -148,6 +148,30 @@
 
   <div id="app" class="loading"><div class="spinner"></div>CARGANDO</div>
 
+  <!-- Modal Ranking -->
+  <div id="rankingModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9998;align-items:center;justify-content:center;">
+    <div style="background:white;border-radius:16px;padding:28px;width:90%;max-width:400px;max-height:80vh;overflow-y:auto;font-family:'CascadiaCode',monospace;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <span style="font-weight:700;font-size:16px;color:#2a1f3d;">🏆 Ranking</span>
+        <button onclick="window.doCloseRanking()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#7a6a99;">✕</button>
+      </div>
+      <p style="font-size:11px;color:#7a6a99;margin-bottom:14px;letter-spacing:1px;">Solo cuenta quien fue verificado. Empates se desempatan por fecha.</p>
+      <div id="rankingContent"></div>
+    </div>
+  </div>
+
+  <!-- Modal quien hizo la tarea -->
+  <div id="doneByModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9998;align-items:center;justify-content:center;">
+    <div style="background:white;border-radius:16px;padding:28px;width:90%;max-width:400px;max-height:80vh;overflow-y:auto;font-family:'CascadiaCode',monospace;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <span style="font-weight:700;font-size:16px;color:#2a1f3d;">👥 Quien la hizo</span>
+        <button onclick="window.doCloseDoneBy()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#7a6a99;">✕</button>
+      </div>
+      <p style="font-size:11px;color:#7a6a99;margin-bottom:14px;letter-spacing:1px;">Verifica o rechaza cada persona</p>
+      <div id="doneByContent"></div>
+    </div>
+  </div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
 import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
@@ -179,6 +203,8 @@ const db = getFirestore(fireApp);
 
 let tasks = [];
 let adminUnlocked = false;
+let rankingOpen = false;
+let confirmedPoints = {};
 let editingId = null;
 let addOpen = false;
 let loginOpen = false;
@@ -405,6 +431,7 @@ function render() {
           '<span class="label">Grupo Escolar</span>' +
           '<div class="dots-wrap">' +
             '<span class="live">● En vivo</span>' +
+            '<button onclick="window.doOpenRanking()" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px 8px;" title="Ranking">🏆</button>' +
             '<button class="dots-btn" id="dotsBtn" onclick="doToggleDots()">···</button>' +
             '<div class="dots-menu" id="dotsMenu">' +
               '<div class="dots-item" id="copyItem" onclick="doCopy()">📋 Copiar para WhatsApp</div>' +
@@ -470,6 +497,82 @@ window.doLogin = function() {
 };
 window.doLock = function() { adminUnlocked = false; addOpen = false; aiOpen = false; render(); };
 
+window.doOpenRanking = function() {
+  // Contar solo tareas confirmadas por tarea
+  const personData = {}; // { name: { count, earliestDate } }
+  tasks.forEach(function(t) {
+    const confirmed = t.confirmedBy || [];
+    const meta = t.doneByMeta || {};
+    confirmed.forEach(function(name) {
+      if (!personData[name]) personData[name] = { count: 0, earliestDate: null };
+      personData[name].count += 1;
+      const dateStr = meta[name] || null;
+      if (dateStr) {
+        const d = new Date(dateStr);
+        if (!personData[name].earliestDate || d < personData[name].earliestDate) {
+          personData[name].earliestDate = d;
+        }
+      }
+    });
+  });
+  const sorted = Object.entries(personData).sort(function(a, b) {
+    if (b[1].count !== a[1].count) return b[1].count - a[1].count;
+    // Desempate: quien lo hizo antes gana
+    const da = a[1].earliestDate;
+    const db2 = b[1].earliestDate;
+    if (da && db2) return da - db2;
+    if (da) return -1;
+    if (db2) return 1;
+    return 0;
+  });
+  const medals = ["🥇","🥈","🥉"];
+  let html = "";
+  if (sorted.length === 0) {
+    html = '<p style="color:#7a6a99;font-size:13px;text-align:center;">Nadie ha sido verificado aun.</p>';
+  } else {
+    sorted.forEach(function(entry, i) {
+      const medal = medals[i] || '<span style="display:inline-block;width:28px;text-align:center;font-size:13px;color:#7a6a99;">' + (i+1) + '</span>';
+      const dateLabel = entry[1].earliestDate ? entry[1].earliestDate.toLocaleDateString("es-SV") : "";
+      html += '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #ede8f5;">' +
+        '<span style="font-size:20px;width:28px;text-align:center;">' + (medals[i] || (i+1)) + '</span>' +
+        '<div style="flex:1;">' +
+          '<div style="font-size:14px;color:#2a1f3d;">' + esc(entry[0]) + '</div>' +
+          (dateLabel ? '<div style="font-size:10px;color:#7a6a99;">Desde ' + dateLabel + '</div>' : '') +
+        '</div>' +
+        '<span style="font-weight:700;color:#7c4dcc;font-size:14px;">' + entry[1].count + ' ✔</span>' +
+        '</div>';
+    });
+  }
+  const content = document.getElementById("rankingContent");
+  const modal = document.getElementById("rankingModal");
+  if (content) content.innerHTML = html;
+  if (modal) modal.style.display = "flex";
+};
+window.doCloseRanking = function() {
+  const modal = document.getElementById("rankingModal");
+  if (modal) modal.style.display = "none";
+};
+
+window.doConfirmDone = async function(taskId, name) {
+  const task = tasks.find(function(t){ return t.id === taskId; });
+  if (!task) return;
+  const confirmedBy = task.confirmedBy || [];
+  if (confirmedBy.includes(name)) return;
+  await updateDoc(doc(db, "tareas", taskId), { confirmedBy: confirmedBy.concat([name]) });
+  window.doShowDoneBy(taskId);
+};
+
+window.doRejectDone = async function(taskId, name) {
+  const task = tasks.find(function(t){ return t.id === taskId; });
+  if (!task) return;
+  const doneBy = (task.doneBy || []).filter(function(n){ return n !== name; });
+  const confirmedBy = (task.confirmedBy || []).filter(function(n){ return n !== name; });
+  const doneByMeta = Object.assign({}, task.doneByMeta || {});
+  delete doneByMeta[name];
+  await updateDoc(doc(db, "tareas", taskId), { doneBy: doneBy, confirmedBy: confirmedBy, doneByMeta: doneByMeta });
+  window.doShowDoneBy(taskId);
+};
+
 // Add panel - toggle without full re-render to avoid losing typed text
 window.doToggleAdd = function() {
   addOpen = !addOpen;
@@ -529,24 +632,52 @@ window.doToggleDone = async function(id) {
   const task = tasks.find(function(t){ return t.id === id; });
   if (!task) return;
   const doneBy = task.doneBy || [];
+  const doneByMeta = task.doneByMeta || {};
   let newDoneBy;
+  let newMeta = Object.assign({}, doneByMeta);
   if (doneBy.includes(currentUser)) {
     newDoneBy = doneBy.filter(function(n){ return n !== currentUser; });
+    delete newMeta[currentUser];
   } else {
     newDoneBy = doneBy.concat([currentUser]);
+    newMeta[currentUser] = new Date().toISOString();
   }
-  await updateDoc(doc(db, "tareas", id), { doneBy: newDoneBy });
+  await updateDoc(doc(db, "tareas", id), { doneBy: newDoneBy, doneByMeta: newMeta });
 };
 
 window.doShowDoneBy = function(id) {
   const task = tasks.find(function(t){ return t.id === id; });
   if (!task) return;
   const doneBy = task.doneBy || [];
+  const confirmedBy = task.confirmedBy || [];
+  const meta = task.doneByMeta || {};
+  let html = "";
   if (doneBy.length === 0) {
-    alert("Nadie ha marcado esta tarea como hecha aún.");
+    html = '<p style="color:#7a6a99;font-size:13px;text-align:center;">Nadie ha marcado esta tarea como hecha.</p>';
   } else {
-    alert("✅ Ya la hicieron:\n\n" + doneBy.join("\n"));
+    doneBy.forEach(function(name) {
+      const isConfirmed = confirmedBy.includes(name);
+      const dateStr = meta[name] ? new Date(meta[name]).toLocaleDateString("es-SV") : "";
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #ede8f5;">' +
+        '<div style="flex:1;">' +
+          '<div style="font-size:14px;color:#2a1f3d;">' + esc(name) + '</div>' +
+          (dateStr ? '<div style="font-size:10px;color:#7a6a99;">' + dateStr + '</div>' : '') +
+        '</div>' +
+        (isConfirmed
+          ? '<span style="color:#2e7d32;font-size:12px;font-weight:700;">✔ Verificado</span><button onclick="window.doRejectDone(\'' + id + '\',\'' + name + '\')" style="background:none;border:1px solid #d93025;border-radius:6px;color:#d93025;font-size:11px;padding:3px 8px;cursor:pointer;font-family:\'CascadiaCode\',monospace;">Rechazar</button>'
+          : '<button onclick="window.doConfirmDone(\'' + id + '\',\'' + name + '\')" style="background:#7c4dcc;border:none;border-radius:6px;color:white;font-size:11px;padding:4px 10px;cursor:pointer;font-family:\'CascadiaCode\',monospace;">✔ Verificar</button><button onclick="window.doRejectDone(\'' + id + '\',\'' + name + '\')" style="background:none;border:1px solid #d93025;border-radius:6px;color:#d93025;font-size:11px;padding:3px 8px;cursor:pointer;font-family:\'CascadiaCode\',monospace;">✕</button>') +
+        '</div>';
+    });
   }
+  const content = document.getElementById("doneByContent");
+  const modal = document.getElementById("doneByModal");
+  if (content) content.innerHTML = html;
+  if (modal) { modal.style.display = "flex"; modal.dataset.taskId = id; }
+};
+
+window.doCloseDoneBy = function() {
+  const modal = document.getElementById("doneByModal");
+  if (modal) modal.style.display = "none";
 };
 
 window.doLogout = function() {
