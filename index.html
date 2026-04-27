@@ -68,8 +68,8 @@
       box-sizing: border-box; width: 100%; overflow: visible;
     }
     @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
-    .card-actions { position: absolute; top: -30px; right: 14px; display:flex;gap:19px; background: gray;border: 1px solid #e0d7f0;border-radius: 10px 10px 0px 0px;padding: 2px 25px; }
-    .icon-btn { background: none; border: 1px solid var(--border); border-radius: 7px; color: var(--muted); cursor: pointer; font-size: 10px; padding: 2px 6px; font-family: 'CascadiaCode', monospace; }
+    .card-actions { position: absolute; top: -30px; right: 14px; display:flex;gap:19px; background: gray;border: 1px solid gray;border-radius: 10px 10px 0px 0px;padding: 2px 25px; }
+    .icon-btn { background: none; border: 1px solid var(--border); border-radius: 7px; color: var(--muted); cursor: pointer; font-size: 10px; padding: 2px 7px; font-family: 'CascadiaCode', monospace; }
     .icon-btn.edit:hover { border-color: var(--warn); color: var(--warn); background: #fff8ee; }
     .icon-btn.del:hover { border-color: var(--danger); color: var(--danger); background: #fff0f0; }
     .card-num { font-size: 13px; font-weight: 700; color: #9a85c0; margin-bottom: 8px; letter-spacing: 3px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; }
@@ -333,12 +333,12 @@ function render() {
     const daysText = days < 0 ? "Vencida" : days === 0 ? "Hoy" : days + "d restantes";
     const borderColor = t.cardColor || "#d8cff0";
     taskHTML += '<div class="task-card" style="background:' + borderColor + ';border-color:' + borderColor + '">' +
-      (adminUnlocked ? '<div class="card-actions"><button class="icon-btn edit" onclick="doStartEdit(\'' + t.id + '\')"><span style="font-size:13px;">✏</span></button><button class="icon-btn del" onclick="doDelete(\'' + t.id + '\')"><span style="font-size:13px;">✕</span></button></div>' : '') +
+      '<div class="card-actions">' + (adminUnlocked ? '<button class="icon-btn edit" onclick="doStartEdit(\'' + t.id + '\')"><span style="font-size:13px;">✏</span></button><button class="icon-btn del" onclick="doDelete(\'' + t.id + '\')"><span style="font-size:13px;">✕</span></button>' : '') + '<button class="icon-btn" onclick="window.doShowDoneBy(\'' + t.id + '\')" style="font-size:10px;">👥 ' + (t.doneBy||[]).length + '</button></div>' +
       '<div class="card-num">TAREA #' + String(i+1).padStart(2,"0")  +
       '<div style="display:flex;align-items:center;gap:6px;line-height:1;margin-right:10px;">' +
         '<span class="badge" style="background:' + u.bg + ';color:' + u.color + ';">' + u.label + '</span>'  +
-        '<span onclick="doToggleDone(\'' + t.id + '\',\'' + t.done + '\')" style="cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;border:2px solid ' + (t.done ? '#7c3aed' : '#c4b5d8') + ';background:' + (t.done ? '#7c3aed' : 'transparent') + ';flex-shrink:0;color:white;font-size:13px;line-height:1;">' + (t.done ? '✓' : '') + '</span>' + '</div></div>' +
-      '<div class="card-title" style="' + (t.done ? 'text-decoration:line-through;opacity:0.5' : '') + '">' + esc(t.title) + '</div>' +
+        '<span onclick="doToggleDone(\'' + t.id + '\')" style="cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;border:2px solid ' + ((t.doneBy||[]).includes(currentUser) ? '#7c3aed' : '#c4b5d8') + ';background:' + ((t.doneBy||[]).includes(currentUser) ? '#7c3aed' : 'transparent') + ';flex-shrink:0;color:white;font-size:13px;line-height:1;">' + ((t.doneBy||[]).includes(currentUser) ? '✓' : '') + '</span>' + '</div></div>' +
+      '<div class="card-title" style="' + ((t.doneBy||[]).includes(currentUser) ? 'text-decoration:line-through;opacity:0.5' : '') + '">' + esc(t.title) + '</div>' +
       (t.desc ? '<div class="card-desc">' + t.desc + '</div>' : '') +
       '<div class="card-meta">' +
       (t.assigned ? '<span>📆 ' + fmtDate(t.assigned) + '</span>' : '') +
@@ -499,7 +499,7 @@ window.doAddTask = async function() {
   const assigned = assignedEl && assignedEl.value;
   const due = dueEl && dueEl.value;
   if (!title || !due) { alert("Nombre y fecha de entrega son obligatorios."); return; }
-  await addDoc(collection(db, "tareas"), { title: title, desc: desc||"", assigned: assigned||"", due: due, cardColor: selectedColor, done: false, createdAt: serverTimestamp() });
+  await addDoc(collection(db, "tareas"), { title: title, desc: desc||"", assigned: assigned||"", due: due, cardColor: selectedColor, doneBy: [], createdAt: serverTimestamp() });
   addOpen = false;
   selectedColor = CARD_COLORS[0].value;
 };
@@ -525,9 +525,28 @@ window.doDelete = async function(id) {
   if (editingId === id) editingId = null;
 };
 
-window.doToggleDone = async function(id, currentDone) {
-  const newDone = currentDone === "true" ? false : true;
-  await updateDoc(doc(db, "tareas", id), {done: newDone});
+window.doToggleDone = async function(id) {
+  const task = tasks.find(function(t){ return t.id === id; });
+  if (!task) return;
+  const doneBy = task.doneBy || [];
+  let newDoneBy;
+  if (doneBy.includes(currentUser)) {
+    newDoneBy = doneBy.filter(function(n){ return n !== currentUser; });
+  } else {
+    newDoneBy = doneBy.concat([currentUser]);
+  }
+  await updateDoc(doc(db, "tareas", id), { doneBy: newDoneBy });
+};
+
+window.doShowDoneBy = function(id) {
+  const task = tasks.find(function(t){ return t.id === id; });
+  if (!task) return;
+  const doneBy = task.doneBy || [];
+  if (doneBy.length === 0) {
+    alert("Nadie ha marcado esta tarea como hecha aún.");
+  } else {
+    alert("✅ Ya la hicieron:\n\n" + doneBy.join("\n"));
+  }
 };
 
 window.doLogout = function() {
@@ -615,7 +634,7 @@ window.doResetAi = function() {
 
 window.doConfirmAi = async function() {
   if (!aiTaskData) return;
-  await addDoc(collection(db, "tareas"), { title: aiTaskData.title, desc: aiTaskData.desc||"", assigned: aiTaskData.assigned||"", due: aiTaskData.due, cardColor: CARD_COLORS[0].value, done:false, createdAt: serverTimestamp() });
+  await addDoc(collection(db, "tareas"), { title: aiTaskData.title, desc: aiTaskData.desc||"", assigned: aiTaskData.assigned||"", due: aiTaskData.due, cardColor: CARD_COLORS[0].value, doneBy: [], createdAt: serverTimestamp() });
   aiTaskData = null;
   aiOpen = false;
   const panel = document.getElementById("aiPanel");
