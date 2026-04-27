@@ -335,7 +335,7 @@ function render() {
       '<div class="card-num">TAREA #' + String(i+1).padStart(2,"0")  +
       '<div style="display:flex;align-items:center;gap:6px;line-height:1;">' +
         '<span class="badge" style="background:' + u.bg + ';color:' + u.color + ';">' + u.label + '</span>'  +
-        '<span onclick="doToggleDone(\'' + t.id + '\',\'' + t.done + '\')" style="cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;">' + (t.done ? '✅' : '⬜') + '</span>' + '</div></div>' +
+        '<span onclick="doToggleDone(\'' + t.id + '\',\'' + t.done + '\')" style="cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;border:2px solid ' + (t.done ? '#7c3aed' : '#c4b5d8') + ';background:' + (t.done ? '#7c3aed' : 'transparent') + ';flex-shrink:0;color:white;font-size:13px;line-height:1;">' + (t.done ? '✓' : '') + '</span>' + '</div></div>' +
       '<div class="card-title" style="' + (t.done ? 'text-decoration:line-through;opacity:0.5' : '') + '">' + esc(t.title) + '</div>' +
       (t.desc ? '<div class="card-desc">' + t.desc + '</div>' : '') +
       '<div class="card-meta">' +
