@@ -29,7 +29,7 @@
                   radial-gradient(circle at 80% 80%, rgba(156,109,224,0.08) 0%, transparent 50%);
       pointer-events: none; z-index: 0;
     }
-    .wrap { max-width: 680px; margin: 0 auto; padding: 16px 16px 60px; position: relative; z-index: 1; }
+    .wrap { max-width: 680px; margin: 0 auto; padding: 16px 16px 60px; position: relative; z-index: 1; box-sizing: border-box; width: 100%; }
 
     .header { margin-bottom: 24px; }
     .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
@@ -64,6 +64,7 @@
       background: var(--card); border: 1px solid var(--border); border-radius: 14px;
       padding: 18px; margin-bottom: 12px; position: relative;
       box-shadow: 0 2px 8px rgba(124,77,204,0.07); animation: fadeIn 0.3s ease;
+      box-sizing: border-box; width: 100%; overflow: hidden;
     }
     @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
     .card-actions { position: absolute; top: 14px; right: 14px; display: flex; gap: 6px; }
