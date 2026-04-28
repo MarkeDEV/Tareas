@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tareas del Grupo</title>
   <style>
+    /* Base global de pagina y variables de color/fuente */
     html { overflow-x: hidden; max-width: 100%; }
     @font-face {
       font-family: 'CascadiaCode';
@@ -32,6 +33,7 @@
     }
     .wrap { max-width: 680px; margin: 0 auto; padding: 16px 16px 60px; position: relative; z-index: 1; box-sizing: border-box; width: 100%; }
 
+    /* Encabezado principal (titulo y controles superiores) */
     .header { margin-bottom: 24px; }
     .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
     .label { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--accent); }
@@ -39,6 +41,7 @@
     h1 { font-size: clamp(32px, 8vw, 44px); font-weight: 700; color: var(--text); line-height: 1.1; margin-bottom: 6px; }
     .subtitle { color: var(--muted); font-size: 13px; }
 
+    /* Menu de 3 puntos (copiar mensaje y cerrar sesion) */
     .dots-wrap { position: relative; display: flex; align-items: center; gap: 8px; }
     .dots-btn {
       background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
@@ -57,15 +60,54 @@
     .dots-item:hover { background: var(--bg); color: var(--accent); }
     .dots-item.ok { color: green; }
 
+    /* Tarjetas de estadisticas (total, urgentes, vencidas) */
     .stats { display: flex; gap: 12px; margin-bottom: 28px; flex-wrap: wrap; }
     .stat { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 4px rgba(124,77,204,0.08); }
     .stat strong { color: var(--text); font-size: 18px; }
 
+    /* Tarjeta visual de cada tarea en la lista */
     .task-card {
       background: var(--card); border: 1px solid var(--border); border-radius: 14px;
       padding: 18px; margin-bottom: 12px; position: relative;
       box-shadow: 0 2px 8px rgba(124,77,204,0.07); animation: fadeIn 0.3s ease;
       box-sizing: border-box; width: 100%; overflow: visible;
+    }
+    .task-card.is-recent { animation: fadeIn 0.3s ease, popRecent 0.25s ease; }
+    @keyframes popRecent {
+      from { transform: scale(0.985); box-shadow: 0 0 0 rgba(124,77,204,0); }
+      to { transform: scale(1); box-shadow: 0 2px 8px rgba(124,77,204,0.07); }
+    }
+    .recent-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      background: #f6efff;
+      color: #6b3fc2;
+      border: 1px solid #d7c3fb;
+    }
+    .recent-hint {
+      font-size: 10px;
+      color: #5b3d94;
+      background: rgba(255,255,255,0.5);
+      border: 1px solid rgba(123,77,204,0.18);
+      border-radius: 999px;
+      padding: 2px 8px;
+    }
+    .recent-btn {
+      border: 1px solid #b99bec;
+      background: #fff;
+      color: #6b3fc2;
+      border-radius: 999px;
+      padding: 3px 9px;
+      font-size: 10px;
+      cursor: pointer;
+      font-family: 'CascadiaCode', monospace;
+      font-weight: 700;
     }
     @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
     .card-actions { position: absolute; top: -30px; right: 14px; display:flex;gap:19px; background: gray;border: 1px solid gray;border-radius: 10px 10px 0px 0px;padding: 2px 15px; height: 29px;align-items: center; }
@@ -82,6 +124,7 @@
     .empty { text-align: center; padding: 60px 20px; color: #c0b0d8; font-size: 13px; letter-spacing: 1px; }
     .empty-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.4; }
 
+    /* Botones y paneles de administracion */
     .admin-toggle { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 18px; color: var(--muted); font-size: 13px; cursor: pointer; width: 100%; margin-bottom: 8px; font-family: 'CascadiaCode', monospace; text-align: left; }
     .admin-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
@@ -89,6 +132,7 @@
     .panel.open { display: block; }
     .panel-label { font-size: 10px; letter-spacing: 3px; color: var(--accent); margin-bottom: 16px; }
 
+    /* Estilos compartidos para formularios (agregar/editar/login) */
     .form-grid { display: flex; flex-direction: column; gap: 10px; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .field label { display: block; font-size: 10px; letter-spacing: 2px; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; }
@@ -111,6 +155,7 @@
     .card-color-opt { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: border-color 0.15s; }
     .card-color-opt.selected { border-color: var(--text); }
 
+    /* Botones reutilizables (primario, secundario, advertencia) */
     .btn { border: none; border-radius: 9px; padding: 11px 20px; font-size: 13px; font-family: 'CascadiaCode', monospace; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; }
     .btn-primary { background: var(--accent); color: #fff; }
     .btn-secondary { background: #e8e0f0; color: var(--muted); }
@@ -125,11 +170,61 @@
     .pin-wrap { display: flex; gap: 8px; margin-bottom: 12px; }
     .pin-wrap .inp { flex: 1; }
 
+    /* Pantalla de carga inicial */
     .loading { display: flex; align-items: center; justify-content: center; min-height: 100vh; flex-direction: column; gap: 12px; color: var(--accent); font-family: 'CascadiaCode', monospace; font-size: 13px; letter-spacing: 2px; }
     .spinner { width: 28px; height: 28px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     .btn-full { width: 100%; }
+    .reminder-toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      width: min(360px, calc(100vw - 36px));
+      background: linear-gradient(135deg, #7c4dcc 0%, #9a6be0 100%);
+      color: #fff;
+      border-radius: 14px;
+      box-shadow: 0 10px 28px rgba(124,77,204,0.35);
+      border: 1px solid rgba(255,255,255,0.25);
+      z-index: 10001;
+      padding: 14px 14px 12px;
+      transform: translateY(20px);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s ease;
+    }
+    .reminder-toast.show {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .reminder-toast-title {
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0.9;
+      margin-bottom: 4px;
+    }
+    .reminder-toast-body {
+      font-size: 14px;
+      line-height: 1.45;
+      margin-bottom: 8px;
+    }
+    .reminder-toast-meta {
+      font-size: 11px;
+      opacity: 0.88;
+    }
+    .reminder-toast-close {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      opacity: 0.9;
+    }
     @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; }
     .card-actions { top: -29,001px ;}
   }
@@ -137,6 +232,7 @@
 </head>
 <body>
 
+  <!-- Modal de entrada: pide nombre del usuario al abrir -->
   <div id="loginModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
   <div style="background:white;border-radius:16px;padding:32px;width:90%;max-width:360px;text-align:center;">
     <h2 style="margin-bottom:8px;">👋 Bienvenido</h2>
@@ -146,7 +242,14 @@
   </div>
 </div>
 
+  <!-- Contenedor principal: aqui se renderiza toda la app -->
   <div id="app" class="loading"><div class="spinner"></div>CARGANDO</div>
+  <div id="reminderToast" class="reminder-toast" role="status" aria-live="polite">
+    <button class="reminder-toast-close" onclick="window.doCloseReminderToast()">✕</button>
+    <div class="reminder-toast-title">Recordatorio</div>
+    <div class="reminder-toast-body" id="reminderToastBody"></div>
+    <div class="reminder-toast-meta" id="reminderToastMeta"></div>
+  </div>
 
   <!-- Modal Ranking -->
   <div id="rankingModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9998;align-items:center;justify-content:center;">
@@ -173,6 +276,11 @@
   </div>
 
 <script type="module">
+/* =========================================================
+   CONFIGURACION GENERAL
+   - Si cambias Firebase, edita firebaseConfig.
+   - Si cambias el PIN admin, edita ADMIN_PIN.
+   ========================================================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
 import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
@@ -201,6 +309,7 @@ const CARD_COLORS = [
 const fireApp = initializeApp(firebaseConfig);
 const db = getFirestore(fireApp);
 
+/* Estado global en memoria para controlar UI y datos */
 let tasks = [];
 let adminUnlocked = false;
 let rankingOpen = false;
@@ -214,12 +323,20 @@ let dotsOpen = false;
 let selectedColor = CARD_COLORS[0].value;
 let editSelectedColor = CARD_COLORS[0].value;
 let currentUser = localStorage.getItem("userName") || "";
+const NEAR_DUE_DAYS_LIMIT = 1;
+const REMINDER_STORAGE_KEY = "nearDueReminderMeta";
+const NEW_TASK_WINDOW_MS = 12 * 60 * 60 * 1000;
+const SEEN_TASKS_STORAGE_KEY = "seenNewTasksByUser";
+let reminderToastTimer = null;
 if (!currentUser) {
   const modal = document.getElementById("loginModal");
   if (modal) modal.style.display = "flex";
 }
 
-
+/* =========================================================
+   FUNCIONES UTILITARIAS
+   - Formato de fecha, dias restantes, escape HTML, orden.
+   ========================================================= */
 function getDaysLeft(due) {
   const now = new Date();
   const todayStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
@@ -250,6 +367,167 @@ function sorted() {
   return [...tasks].sort(function(a,b){ return getDaysLeft(b.due) - getDaysLeft(a.due); });
 }
 
+function getTaskCreatedAtMs(task) {
+  if (!task || !task.createdAt) return 0;
+  if (typeof task.createdAt.toMillis === "function") return task.createdAt.toMillis();
+  if (task.createdAt.seconds) return task.createdAt.seconds * 1000;
+  const parsed = new Date(task.createdAt).getTime();
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function getSeenTasksByUser() {
+  try {
+    return JSON.parse(localStorage.getItem(SEEN_TASKS_STORAGE_KEY) || "{}");
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveSeenTasksByUser(data) {
+  localStorage.setItem(SEEN_TASKS_STORAGE_KEY, JSON.stringify(data));
+}
+
+function isTaskRecent(task) {
+  const createdAtMs = getTaskCreatedAtMs(task);
+  if (!createdAtMs) return false;
+  if (getDaysLeft(task.due) < 0) return false;
+  return Date.now() - createdAtMs <= NEW_TASK_WINDOW_MS;
+}
+
+function isTaskSeen(taskId) {
+  const userKey = (currentUser || "").toLowerCase();
+  if (!userKey) return true;
+  const seenData = getSeenTasksByUser();
+  const list = seenData[userKey] || [];
+  return list.includes(taskId);
+}
+
+function markTaskSeen(taskId) {
+  const userKey = (currentUser || "").toLowerCase();
+  if (!userKey || !taskId) return;
+  const seenData = getSeenTasksByUser();
+  const list = seenData[userKey] || [];
+  if (list.includes(taskId)) return;
+  seenData[userKey] = list.concat([taskId]);
+  saveSeenTasksByUser(seenData);
+}
+
+function getRelativeCreatedText(task) {
+  const createdAtMs = getTaskCreatedAtMs(task);
+  if (!createdAtMs) return "";
+  const diffMin = Math.max(1, Math.round((Date.now() - createdAtMs) / 60000));
+  if (diffMin < 60) return "Agregada hace " + diffMin + " min";
+  const diffH = Math.round(diffMin / 60);
+  if (diffH < 24) return "Agregada hace " + diffH + " h";
+  const diffD = Math.round(diffH / 24);
+  return "Agregada hace " + diffD + " d";
+}
+
+function getNearDueTasks() {
+  return tasks.filter(function(t) {
+    const days = getDaysLeft(t.due);
+    return days <= NEAR_DUE_DAYS_LIMIT;
+  }).sort(function(a, b) {
+    return getDaysLeft(a.due) - getDaysLeft(b.due);
+  });
+}
+
+function todayKey() {
+  const now = new Date();
+  return now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0") + "-" + String(now.getDate()).padStart(2, "0");
+}
+
+function getReminderMeta() {
+  try {
+    return JSON.parse(localStorage.getItem(REMINDER_STORAGE_KEY) || "{}");
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveReminderMeta(meta) {
+  localStorage.setItem(REMINDER_STORAGE_KEY, JSON.stringify(meta));
+}
+
+function notificationBodyForTasks(nearDue) {
+  if (!nearDue.length) return "";
+  const first = nearDue[0];
+  const days = getDaysLeft(first.due);
+  const firstStatus = days < 0 ? "Ya vencio" : days === 0 ? "Vence hoy" : "Vence manana";
+  if (nearDue.length === 1) {
+    return firstStatus + ": " + first.title;
+  }
+  return firstStatus + ": " + first.title + ". Y " + (nearDue.length - 1) + " tarea(s) mas cerca de vencer.";
+}
+
+function toastMessageForTasks(nearDue) {
+  const first = nearDue[0];
+  const days = getDaysLeft(first.due);
+  const status = days < 0 ? "Esta vencida" : days === 0 ? "Vence hoy" : "Vence manana";
+  if (nearDue.length === 1) return "📌 " + status + ": " + first.title;
+  return "📌 " + status + ": " + first.title + " (+" + (nearDue.length - 1) + " mas cerca de vencer)";
+}
+
+function showReminderToast(nearDue) {
+  const toast = document.getElementById("reminderToast");
+  const body = document.getElementById("reminderToastBody");
+  const meta = document.getElementById("reminderToastMeta");
+  if (!toast || !body || !meta || !nearDue.length) return;
+  body.textContent = toastMessageForTasks(nearDue);
+  meta.textContent = "Abre la lista y prioriza las primeras tareas.";
+  toast.classList.add("show");
+  if (reminderToastTimer) clearTimeout(reminderToastTimer);
+  reminderToastTimer = setTimeout(function() {
+    toast.classList.remove("show");
+  }, 7000);
+}
+
+window.doCloseReminderToast = function() {
+  const toast = document.getElementById("reminderToast");
+  if (toast) toast.classList.remove("show");
+  if (reminderToastTimer) clearTimeout(reminderToastTimer);
+  reminderToastTimer = null;
+};
+
+window.doMarkTaskSeen = function(taskId) {
+  const task = tasks.find(function(t){ return t.id === taskId; });
+  if (!task) return;
+  if (!isTaskRecent(task)) return;
+  if (isTaskSeen(taskId)) return;
+  markTaskSeen(taskId);
+  render();
+};
+
+function maybeSendNearDueReminder() {
+  if (!currentUser) return;
+  const nearDue = getNearDueTasks();
+  if (!nearDue.length) return;
+  const meta = getReminderMeta();
+  const userKey = currentUser.toLowerCase();
+  if (meta[userKey] === todayKey()) return;
+  showReminderToast(nearDue);
+  if ("Notification" in window && Notification.permission === "granted") {
+    const body = notificationBodyForTasks(nearDue);
+    if (body) new Notification("Recordatorio de tareas", { body: body });
+  }
+  meta[userKey] = todayKey();
+  saveReminderMeta(meta);
+}
+
+window.doEnableReminders = async function() {
+  if (!("Notification" in window)) {
+    alert("Este navegador no soporta notificaciones.");
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  if (perm === "granted") {
+    maybeSendNearDueReminder();
+    alert("Recordatorios activados.");
+  } else {
+    alert("No se pudieron activar las notificaciones.");
+  }
+};
+
 function buildMessage() {
   const list = sorted();
   if (!list.length) return "No hay tareas esta semana.";
@@ -270,6 +548,7 @@ function buildMessage() {
   return lines.join("\n");
 }
 
+/* Copiar listado listo para WhatsApp */
 function doCopy() {
   const text = buildMessage();
   function fallback() {
@@ -297,6 +576,7 @@ function showCopyOk() {
   }, 2000);
 }
 
+/* Construye HTML para selector de color de tarjeta */
 function colorPickerHTML(selectedVal, prefix) {
   let html = '<div class="color-picker-row">';
   CARD_COLORS.forEach(function(c) {
@@ -306,6 +586,7 @@ function colorPickerHTML(selectedVal, prefix) {
   return html;
 }
 
+/* Construye toolbar de formato para descripcion enriquecida */
 function toolbarHTML(targetId) {
   return '<div class="toolbar">' +
     '<button class="tb-btn" onclick="doFormat(\'bold\',\'' + targetId + '\')"><b>N</b></button>' +
@@ -322,6 +603,11 @@ function toolbarHTML(targetId) {
 
 currentUser = localStorage.getItem("userName") || "";
 
+/* =========================================================
+   RENDER PRINCIPAL
+   - Aqui se construye toda la interfaz dinamicamente.
+   - Si quieres cambiar estructura visual, empieza aqui.
+   ========================================================= */
 function render() {
   const modal = document.getElementById("loginModal");
   if (!currentUser) {
@@ -358,15 +644,20 @@ function render() {
     const u = urgency(days);
     const daysText = days < 0 ? "Vencida" : days === 0 ? "Hoy" : days + "d restantes";
     const borderColor = t.cardColor || "#d8cff0";
-    taskHTML += '<div class="task-card" style="background:' + borderColor + ';border-color:' + borderColor + '">' +
+    const showNewTag = isTaskRecent(t) && !isTaskSeen(t.id);
+    const newTagHtml = showNewTag ? '<span class="recent-chip">● Reciente</span>' : "";
+    const recentText = showNewTag ? '<span class="recent-hint">' + getRelativeCreatedText(t) + '</span><button class="recent-btn" onclick="event.stopPropagation();doMarkTaskSeen(\'' + t.id + '\')">Entendido</button>' : "";
+    taskHTML += '<div class="task-card ' + (showNewTag ? "is-recent" : "") + '" style="background:' + borderColor + ';border-color:' + borderColor + '">' +
       '<div class="card-actions">' + (adminUnlocked ? '<button class="icon-btn edit" onclick="doStartEdit(\'' + t.id + '\')"><span style="font-size:13px;">✏</span></button><button class="icon-btn del" onclick="doDelete(\'' + t.id + '\')"><span style="font-size:13px;">✕</span></button>' : '') + '<button class="icon-btn" onclick="window.doShowDoneBy(\'' + t.id + '\')" style="font-size:10px;">👥 ' + (t.doneBy||[]).length + '</button></div>' +
       '<div class="card-num">TAREA #' + String(i+1).padStart(2,"0")  +
       '<div style="display:flex;align-items:center;gap:6px;line-height:1;margin-right:10px;">' +
+        newTagHtml +
         '<span class="badge" style="background:' + u.bg + ';color:' + u.color + ';">' + u.label + '</span>'  +
         '<span onclick="doToggleDone(\'' + t.id + '\')" style="cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;border:2px solid ' + ((t.doneBy||[]).includes(currentUser) ? '#7c3aed' : '#c4b5d8') + ';background:' + ((t.doneBy||[]).includes(currentUser) ? '#7c3aed' : 'transparent') + ';flex-shrink:0;color:white;font-size:13px;line-height:1;">' + ((t.doneBy||[]).includes(currentUser) ? '✓' : '') + '</span>' + '</div></div>' +
       '<div class="card-title" style="' + ((t.doneBy||[]).includes(currentUser) ? 'text-decoration:line-through;opacity:0.5' : '') + '">' + esc(t.title) + '</div>' +
       (t.desc ? '<div class="card-desc">' + t.desc + '</div>' : '') +
       '<div class="card-meta">' +
+      recentText +
       (t.assigned ? '<span>📆 ' + fmtDate(t.assigned) + '</span>' : '') +
       '<span>⏰ ' + fmtDate(t.due) + '</span>' +
       '<span class="days-left" style="color:' + u.color + '">' + daysText + '</span>' +
@@ -434,6 +725,7 @@ function render() {
             '<button onclick="window.doOpenRanking()" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px 8px;" title="Ranking">🏆</button>' +
             '<button class="dots-btn" id="dotsBtn" onclick="doToggleDots()">···</button>' +
             '<div class="dots-menu" id="dotsMenu">' +
+              '<div class="dots-item" onclick="doEnableReminders()">🔔 Activar recordatorios</div>' +
               '<div class="dots-item" id="copyItem" onclick="doCopy()">📋 Copiar para WhatsApp</div>' +
               '<div class="dots-item" onclick="window.doLogout()">Cerrar seción</div>' +
             '</div>' +
@@ -452,7 +744,7 @@ function render() {
     '</div>';
 }
 
-// Format actions
+// Acciones de formato de texto (negrita, cursiva, subrayado, color)
 window.doFormat = function(cmd, targetId) {
   const el = document.getElementById(targetId);
   if (!el) return;
@@ -474,7 +766,7 @@ window.doSelectColor = function(color, prefix) {
   });
 };
 
-// Dots
+// Menu de tres puntos
 window.doToggleDots = function() {
   dotsOpen = !dotsOpen;
   const m = document.getElementById("dotsMenu");
@@ -488,7 +780,7 @@ document.addEventListener("click", function(e) {
   }
 });
 
-// Admin
+// Bloque de autenticacion y sesion admin
 window.doToggleLogin = function() { loginOpen = !loginOpen; render(); if (loginOpen) setTimeout(function(){ const p = document.getElementById("pinInput"); if(p) p.focus(); },100); };
 window.doLogin = function() {
   const inp = document.getElementById("pinInput");
@@ -497,6 +789,7 @@ window.doLogin = function() {
 };
 window.doLock = function() { adminUnlocked = false; addOpen = false; aiOpen = false; render(); };
 
+// Ranking de usuarios verificados por tareas completadas
 window.doOpenRanking = function() {
   // Contar solo tareas confirmadas por tarea
   const personData = {}; // { name: { count, earliestDate } }
@@ -575,7 +868,7 @@ window.doRejectDone = async function(taskId, name) {
   window.doShowDoneBy(taskId);
 };
 
-// Add panel - toggle without full re-render to avoid losing typed text
+// Panel de agregar tarea (sin rerender completo para no perder texto escrito)
 window.doToggleAdd = function() {
   addOpen = !addOpen;
   const panel = document.getElementById("addPanel");
@@ -584,7 +877,7 @@ window.doToggleAdd = function() {
   if (addOpen) setTimeout(function(){ const t = document.getElementById("nTitle"); if(t) t.focus(); },100);
 };
 
-// AI panel - toggle without full re-render
+// Panel IA para convertir texto libre en una tarea estructurada
 window.doToggleAi = function() {
   aiOpen = !aiOpen;
   aiTaskData = null;
@@ -609,6 +902,7 @@ window.doAddTask = async function() {
   selectedColor = CARD_COLORS[0].value;
 };
 
+// Edicion y eliminacion de tareas existentes
 window.doStartEdit = function(id) { editingId = id; render(); };
 window.doCancelEdit = function() { editingId = null; render(); };
 window.doSaveEdit = async function(id) {
@@ -630,6 +924,7 @@ window.doDelete = async function(id) {
   if (editingId === id) editingId = null;
 };
 
+// Marcar/desmarcar tarea como hecha por el usuario actual
 window.doToggleDone = async function(id) {
   const task = tasks.find(function(t){ return t.id === id; });
   if (!task) return;
@@ -647,6 +942,7 @@ window.doToggleDone = async function(id) {
   await updateDoc(doc(db, "tareas", id), { doneBy: newDoneBy, doneByMeta: newMeta });
 };
 
+// Modal para ver y validar quienes marcaron una tarea como hecha
 window.doShowDoneBy = function(id) {
   const task = tasks.find(function(t){ return t.id === id; });
   if (!task) return;
@@ -687,6 +983,7 @@ window.doCloseDoneBy = function() {
   if (modal) modal.style.display = "none";
 };
 
+// Login/logout de usuario normal (nombre guardado en localStorage)
 window.doLogout = function() {
   localStorage.removeItem("userName");
   currentUser = "";
@@ -707,7 +1004,7 @@ window.doLoginName = function() {
   render();
 };
 
-// AI
+// Flujo IA: interpretar texto, previsualizar y guardar tarea
 window.doSendAi = async function() {
   const inputEl = document.getElementById("aiInput");
   const input = inputEl && inputEl.value.trim();
@@ -779,11 +1076,12 @@ window.doConfirmAi = async function() {
   if (panel) panel.classList.remove("open");
 };
 
-// Realtime
+// Sincronizacion en tiempo real con Firestore + refresco por fecha
 const q = query(collection(db, "tareas"), orderBy("createdAt", "asc"));
 onSnapshot(q, function(snap) {
   tasks = snap.docs.map(function(d){ return Object.assign({ id: d.id }, d.data()); });
   render();
+  maybeSendNearDueReminder();
 });
 
 function scheduleRefresh() {
@@ -793,6 +1091,7 @@ function scheduleRefresh() {
 }
 scheduleRefresh();
 setInterval(function(){ render(); }, 60000);
+setInterval(function(){ maybeSendNearDueReminder(); }, 60000);
 </script>
 </body>
 </html>
