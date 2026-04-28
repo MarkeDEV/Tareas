@@ -935,12 +935,13 @@ window.doLock = function() { adminUnlocked = false; addOpen = false; aiOpen = fa
 
 // Ranking de usuarios verificados por tareas completadas
 window.doOpenRanking = function() {
-  // Contar solo tareas confirmadas por tarea
-  const personData = {}; // { name: { count, earliestDate } }
+  // Paso 1: contar verificaciones desde tareas activas (datos legacy y actuales)
+  const personData = {};
   tasks.forEach(function(t) {
     const confirmed = t.confirmedBy || [];
     const meta = t.doneByMeta || {};
     confirmed.forEach(function(name) {
+      if (!name) return;
       if (!personData[name]) personData[name] = { count: 0, earliestDate: null };
       personData[name].count += 1;
       const dateStr = meta[name] || null;
@@ -952,12 +953,15 @@ window.doOpenRanking = function() {
       }
     });
   });
-  // Mezcla con historial persistido para que no bajen puntos al borrar tareas.
+  // Paso 2: fusionar con ranking_scores de Firestore (puntos manuales y persistentes)
+  // Si ranking_scores tiene más puntos que lo contado en tareas activas, usar ese valor
   rankingScores.forEach(function(row) {
     const name = row.name || "";
     if (!name) return;
     if (!personData[name]) personData[name] = { count: 0, earliestDate: null };
-    personData[name].count = Math.max(personData[name].count, row.points || 0);
+    if ((row.points || 0) > personData[name].count) {
+      personData[name].count = Number(row.points || 0);
+    }
     if (!personData[name].earliestDate && row.firstConfirmedAt) {
       personData[name].earliestDate = new Date(row.firstConfirmedAt);
     }
@@ -1109,11 +1113,22 @@ window.doRejectDone = async function(taskId, name) {
   if (!adminUnlocked) return;
   const task = tasks.find(function(t){ return t.id === taskId; });
   if (!task) return;
+  const confirmedBy = task.confirmedBy || [];
+  const wasConfirmed = confirmedBy.includes(name);
   const doneBy = (task.doneBy || []).filter(function(n){ return n !== name; });
-  const confirmedBy = (task.confirmedBy || []).filter(function(n){ return n !== name; });
+  const newConfirmedBy = confirmedBy.filter(function(n){ return n !== name; });
   const doneByMeta = Object.assign({}, task.doneByMeta || {});
   delete doneByMeta[name];
-  await updateDoc(doc(db, "tareas", taskId), { doneBy: doneBy, confirmedBy: confirmedBy, doneByMeta: doneByMeta });
+  await updateDoc(doc(db, "tareas", taskId), { doneBy: doneBy, confirmedBy: newConfirmedBy, doneByMeta: doneByMeta });
+  // Si estaba verificado, restar el punto del ranking
+  if (wasConfirmed) {
+    try {
+      await upsertRankingScore(name, -1);
+      await addRankingEvent(name, -1, "task_rejection", "Verificacion rechazada: " + (task.title || "Sin titulo"));
+    } catch(e) {
+      console.error("No se pudo restar punto de ranking", e);
+    }
+  }
   window.doShowDoneBy(taskId);
 };
 
@@ -1200,13 +1215,27 @@ window.doToggleDone = async function(id) {
   let newDoneBy;
   let newMeta = Object.assign({}, doneByMeta);
   if (doneBy.includes(currentUser)) {
+    // Desmarcar: quitar de doneBy, doneByMeta y confirmedBy
     newDoneBy = doneBy.filter(function(n){ return n !== currentUser; });
     delete newMeta[currentUser];
+    const confirmedBy = task.confirmedBy || [];
+    const wasConfirmed = confirmedBy.includes(currentUser);
+    const newConfirmedBy = confirmedBy.filter(function(n){ return n !== currentUser; });
+    await updateDoc(doc(db, "tareas", id), { doneBy: newDoneBy, doneByMeta: newMeta, confirmedBy: newConfirmedBy });
+    // Si estaba verificado, restar el punto del ranking
+    if (wasConfirmed) {
+      try {
+        await upsertRankingScore(currentUser, -1);
+        await addRankingEvent(currentUser, -1, "task_uncheck", "Tarea desmarcada: " + (task.title || "Sin titulo"));
+      } catch(e) {
+        console.error("No se pudo revertir punto de ranking", e);
+      }
+    }
   } else {
     newDoneBy = doneBy.concat([currentUser]);
     newMeta[currentUser] = new Date().toISOString();
+    await updateDoc(doc(db, "tareas", id), { doneBy: newDoneBy, doneByMeta: newMeta });
   }
-  await updateDoc(doc(db, "tareas", id), { doneBy: newDoneBy, doneByMeta: newMeta });
 };
 
 // Modal para ver y validar quienes marcaron una tarea como hecha
