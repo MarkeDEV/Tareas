@@ -954,14 +954,13 @@ window.doOpenRanking = function() {
     });
   });
   // Paso 2: fusionar con ranking_scores de Firestore (puntos manuales y persistentes)
-  // Si ranking_scores tiene más puntos que lo contado en tareas activas, usar ese valor
+  // ranking_scores es la fuente de verdad: siempre usar su valor si existe
   rankingScores.forEach(function(row) {
     const name = row.name || "";
     if (!name) return;
     if (!personData[name]) personData[name] = { count: 0, earliestDate: null };
-    if ((row.points || 0) > personData[name].count) {
-      personData[name].count = Number(row.points || 0);
-    }
+    // Siempre usar el valor de Firestore (ranking_scores) como fuente de verdad
+    personData[name].count = Number(row.points || 0);
     if (!personData[name].earliestDate && row.firstConfirmedAt) {
       personData[name].earliestDate = new Date(row.firstConfirmedAt);
     }
@@ -1013,11 +1012,12 @@ window.doOpenRanking = function() {
   const content = document.getElementById("rankingContent");
   const modal = document.getElementById("rankingModal");
   if (content) content.innerHTML = html;
-  if (modal) modal.style.display = "flex";
+  if (modal) { modal.style.display = "flex"; rankingOpen = true; }
 };
 window.doCloseRanking = function() {
   const modal = document.getElementById("rankingModal");
   if (modal) modal.style.display = "none";
+  rankingOpen = false;
   rankingActionsOpenFor = "";
 };
 
@@ -1076,6 +1076,18 @@ window.doAdjustPoints = async function(name, delta) {
     type: "success"
   });
   rankingActionsOpenFor = "";
+  // Actualizar rankingScores en memoria de inmediato para reflejar el cambio
+  // sin esperar al onSnapshot asincrono de Firestore
+  const docId = rankingDocIdFromName(cleanName);
+  const existingIdx = rankingScores.findIndex(function(r){ return r.id === docId || r.name === cleanName; });
+  if (existingIdx >= 0) {
+    rankingScores[existingIdx] = Object.assign({}, rankingScores[existingIdx], {
+      points: Math.max(0, (rankingScores[existingIdx].points || 0) + delta)
+    });// Código actual que maneja la lógica de sumar y restar puntos
+// ...
+  } else {
+    rankingScores.push({ id: docId, name: cleanName, points: Math.max(0, delta), firstConfirmedAt: new Date().toISOString() });
+  }
   window.doOpenRanking();
 };
 
@@ -1390,6 +1402,7 @@ onSnapshot(collection(db, "ranking_scores"), function(snap) {
       firstConfirmedAt: row.firstConfirmedAt || null
     };
   });
+  if (rankingOpen) window.doOpenRanking();
 });
 
 onSnapshot(query(collection(db, "ranking_events"), orderBy("createdAt", "desc")), function(snap) {
