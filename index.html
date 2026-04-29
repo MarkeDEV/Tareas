@@ -308,7 +308,7 @@
    - Si cambias el PIN admin, edita ADMIN_PIN.
    ========================================================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy, getDoc, setDoc, increment } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCwRb3jxSqHrQHzXsPaGrCNjnMrwnjCqCI",
@@ -407,19 +407,20 @@ function rankingDocIdFromName(name) {
 
 async function upsertRankingScore(name, delta) {
   const rankingRef = doc(db, "ranking_scores", rankingDocIdFromName(name));
-  const rankingSnap = await getDoc(rankingRef);
   const nowIso = new Date().toISOString();
+  const rankingSnap = await getDoc(rankingRef);
   if (rankingSnap.exists()) {
-    const prev = rankingSnap.data() || {};
-    const nextPoints = Math.max(0, Number(prev.points || 0) + delta);
-    await setDoc(rankingRef, {
+    // Usar increment atomico para evitar race conditions entre llamadas simultaneas
+    await updateDoc(rankingRef, {
       name: name,
-      points: nextPoints,
-      firstConfirmedAt: prev.firstConfirmedAt || nowIso,
+      points: increment(delta),
       updatedAt: nowIso
     });
-    return nextPoints;
+    // Calcular el valor resultante para devolver
+    const prev = rankingSnap.data() || {};
+    return Math.max(0, Number(prev.points || 0) + delta);
   }
+  // Documento nuevo: crear con valor inicial
   const startPoints = Math.max(0, delta);
   await setDoc(rankingRef, {
     name: name,
@@ -910,7 +911,6 @@ window.doSelectColor = function(color, prefix) {
   });
 };
 
-// Menu de tres puntos
 window.doToggleDots = function() {
   dotsOpen = !dotsOpen;
   const m = document.getElementById("dotsMenu");
@@ -959,8 +959,9 @@ window.doOpenRanking = function() {
     const name = row.name || "";
     if (!name) return;
     if (!personData[name]) personData[name] = { count: 0, earliestDate: null };
-    // Siempre usar el valor de Firestore (ranking_scores) como fuente de verdad
-    personData[name].count = Number(row.points || 0);
+    // Si el valor en Firestore es mayor (por ajustes o tareas borradas), usarlo.
+    // Si es menor, es porque hay tareas activas legacy que no se han borrado.
+    personData[name].count = Math.max(personData[name].count, Number(row.points || 0));
     if (!personData[name].earliestDate && row.firstConfirmedAt) {
       personData[name].earliestDate = new Date(row.firstConfirmedAt);
     }
@@ -1039,12 +1040,12 @@ window.doConfirmDone = async function(taskId, name) {
     return;
   }
   try {
-    await upsertRankingScore(name, 1);
+    const newTotal = await upsertRankingScore(name, 1);
     await addRankingEvent(name, 1, "task_verification", "Tarea: " + (task.title || "Sin titulo"));
+    showAppMessage({ title: "Verificación aplicada", body: name + " ahora tiene " + newTotal + " puntos.", type: "success" });
   } catch (e) {
     console.error("No se pudo actualizar ranking historico", e);
   }
-  showAppMessage({ title: "Verificacion aplicada", body: name + " recibio +1 punto.", type: "success" });
   window.doShowDoneBy(taskId);
 };
 
@@ -1076,15 +1077,11 @@ window.doAdjustPoints = async function(name, delta) {
     type: "success"
   });
   rankingActionsOpenFor = "";
-  // Actualizar rankingScores en memoria de inmediato para reflejar el cambio
-  // sin esperar al onSnapshot asincrono de Firestore
-  const docId = rankingDocIdFromName(cleanName);
-  const existingIdx = rankingScores.findIndex(function(r){ return r.id === docId || r.name === cleanName; });
+  // Actualizar rankingScores en memoria .findIndex(function(r){ return r.id === docId || r.name === cleanName; });
   if (existingIdx >= 0) {
     rankingScores[existingIdx] = Object.assign({}, rankingScores[existingIdx], {
       points: Math.max(0, (rankingScores[existingIdx].points || 0) + delta)
-    });// Código actual que maneja la lógica de sumar y restar puntos
-// ...
+    });
   } else {
     rankingScores.push({ id: docId, name: cleanName, points: Math.max(0, delta), firstConfirmedAt: new Date().toISOString() });
   }
@@ -1208,6 +1205,7 @@ window.doDelete = async function(id) {
     okText: "Eliminar"
   });
   if (!confirmResult || !confirmResult.accepted) return;
+
   try {
     await deleteDoc(doc(db, "tareas", id));
   } catch (e) {
@@ -1237,8 +1235,9 @@ window.doToggleDone = async function(id) {
     // Si estaba verificado, restar el punto del ranking
     if (wasConfirmed) {
       try {
-        await upsertRankingScore(currentUser, -1);
+        const newTotal = await upsertRankingScore(currentUser, -1);
         await addRankingEvent(currentUser, -1, "task_uncheck", "Tarea desmarcada: " + (task.title || "Sin titulo"));
+        showAppMessage({ title: "Punto revertido", body: "Has desmarcado la tarea. Ahora tienes " + newTotal + " puntos.", type: "warn" });
       } catch(e) {
         console.error("No se pudo revertir punto de ranking", e);
       }
