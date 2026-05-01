@@ -254,7 +254,8 @@ function render() {
        <div id="pinErr" style="display:none;color:var(--danger)">Incorrecta</div>
      </div>`;
 
-  document.getElementById("app").innerHTML = `
+  const appCont = document.getElementById("app");
+  appCont.innerHTML = `
     <div class="wrap">
       <div class="header">
         <div class="header-top">
@@ -282,6 +283,9 @@ function render() {
       ${archiveToggleHTML}
       ${adminHTML}
     </div>`;
+
+  // Quitar estado de carga para posicionar arriba
+  appCont.classList.remove("loading");
 
   // Initialize Lucide icons
   if (window.lucide) {

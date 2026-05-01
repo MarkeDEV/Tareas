@@ -190,7 +190,7 @@ textarea.inp { resize: vertical; }
 .btn-warn { background: var(--warn); color: #fff; }
 .btn-row { display: flex; gap: 10px; }
 
-/* Icon sizes */
+/* Icon sizes y Colores Originales */
 .lucide {
   width: 18px;
   height: 18px;
@@ -202,27 +202,38 @@ textarea.inp { resize: vertical; }
   width: 16px;
   height: 16px;
   margin-right: 6px;
+  color: inherit;
 }
 .icon-btn .lucide {
   width: 14px;
   height: 14px;
+  transition: all 0.2s ease;
 }
-.stat .lucide {
-  width: 18px;
-  height: 18px;
-  color: var(--icon-color);
+
+/* Colores específicos solicitados: */
+.card-meta span:nth-child(1) .lucide { color: var(--danger); } /* Calendario Rojo */
+.card-meta span:nth-child(2) .lucide { color: var(--warn); }   /* Reloj Naranja */
+.ranking-btn-icon { color: #f59e0b; }                         /* Ranking Oro */
+.icon-btn.users .lucide { color: #ffffff; }                    /* Personas Blanco Puro para contraste total */
+.stat .lucide { color: var(--accent); }                       /* Estadísticas Morado */
+
+.icon-btn.users {
+  color: #fff !important; /* Número siempre blanco para legibilidad */
 }
+.icon-btn.users:hover {
+  color: #fff !important; /* Evita el cambio a azul en hover */
+}
+
 .card-meta .lucide {
-  color: var(--icon-color);
+  width: 14px;
+  height: 14px;
+  opacity: 1;
 }
 .empty-icon .lucide {
   width: 48px;
   height: 48px;
   stroke-width: 1.5px;
-}
-.ranking-btn-icon {
-  width: 22px;
-  height: 22px;
+  opacity: 0.5;
   color: var(--accent);
 }
 
