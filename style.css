@@ -15,6 +15,7 @@ html { overflow-x: hidden; max-width: 100%; }
   --text: #2a1f3d;
   --muted: #7a6a99;
   --card: #ffffff;
+  --icon-color: #6366f1;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--text); font-family: 'CascadiaCode', monospace; min-height: 100vh; overflow-x: hidden; max-width: 100vw; }
@@ -209,7 +210,10 @@ textarea.inp { resize: vertical; }
 .stat .lucide {
   width: 18px;
   height: 18px;
-  color: var(--accent);
+  color: var(--icon-color);
+}
+.card-meta .lucide {
+  color: var(--icon-color);
 }
 .empty-icon .lucide {
   width: 48px;
